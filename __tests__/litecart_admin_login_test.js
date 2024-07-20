@@ -62,7 +62,7 @@ describe('Litecart Admin', function() {
 		expect(names).toEqual(names.slice().sort())
 	})
 
-	test.only('Zones are in alphabetical order', async function() {
+	test('Zones are in alphabetical order', async function() {
 		driver.get(baseUrl + '/?app=countries&doc=countries')
 
 		const countriesLocator = `//tr[@class='row']/td[6][not(text()=0)]/../td[5]`
@@ -85,6 +85,30 @@ describe('Litecart Admin', function() {
 			expect(zones).toEqual(zones.slice().sort())
 
 			driver.get(baseUrl + '/?app=countries&doc=countries')
+		}
+	})
+
+	test('Geo zones are in alphbetical order', async function() {
+		driver.get(baseUrl + '/?app=geo_zones&doc=geo_zones')
+
+		const countries = await Promise.all(
+			(await driver.findElements(By.css('tr.row td:nth-child(3)')))
+				.map(el => el.getText())
+		)
+
+		for (countryName of countries) {
+			const country = await driver.findElement(By.xpath(`//a[text() = '${countryName}']`))
+			await country.click();
+
+			const zonesLocator = `//table[@id='table-zones']//tr[not(@class)]//td[3]//select//option[@selected]`
+			const zones = await Promise.all(
+				(await driver.findElements(By.xpath(zonesLocator)))
+					.map(el => el.getText())
+			)
+
+			expect(zones).toEqual(zones.slice().sort())
+
+			driver.get(baseUrl + '/?app=geo_zones&doc=geo_zones')
 		}
 	})
 
