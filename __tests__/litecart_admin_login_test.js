@@ -3,11 +3,11 @@ const { Builder, Browser, By, Key, until, error } = require('selenium-webdriver'
 
 describe('Litecart Admin', function() {
 	let driver
-	const baseUrl = 'http://localhost:8080/litecart/admin';
+	const baseUrl = 'http://localhost:8080/litecart/admin'
 
 	beforeEach(async function() {
 		driver = await new Builder().forBrowser(Browser.CHROME).build()
-		await driver.manage().setTimeouts({ implicit: 2000 });
+		await driver.manage().setTimeouts({ implicit: 2000 })
 
 		await driver.get(baseUrl + '/login.php')
 		await driver.findElement(By.name('username')).sendKeys('admin')
@@ -21,34 +21,70 @@ describe('Litecart Admin', function() {
 	})
 
 	test('Navbar works', async function() {
-		const baseLocator = '#box-apps-menu > li';
-		const navList = await driver.findElements(By.css(baseLocator));
-		expect(navList).toBeDefined();
+		const baseLocator = '#box-apps-menu > li'
+		const navList = await driver.findElements(By.css(baseLocator))
+		expect(navList).toBeDefined()
 
 		for (let i = 1; i <= navList.length; i += 1) {
-			const mainNavLocator = baseLocator + `:nth-child(${i})`;
+			const mainNavLocator = baseLocator + `:nth-child(${i})`
 			const mainNavItem = await driver
 				.findElement(By.css(mainNavLocator))
-				.click();
+				.click()
 			await expect(
 				async () => await driver.findElement(By.css('h1'))
-			).not.toThrow();
+			).not.toThrow()
 
-			// await driver.wait(until.elementsLocated(By.css(mainNavLocator + ' li')), 2000);
-			const subNavCount = await driver.findElements(By.css(mainNavLocator + ' li'));
+			// await driver.wait(until.elementsLocated(By.css(mainNavLocator + ' li')), 2000)
+			const subNavCount = await driver.findElements(By.css(mainNavLocator + ' li'))
 			if (!subNavCount.length) {
-				continue;
+				continue
 			}
 
 			for (let j = 1; j <= subNavCount.length; j += 1) {
 				await driver.findElement(By.css(mainNavLocator + ` li:nth-child(${j})`))
-					.click();
+					.click()
 				await expect(
 					async () => await driver.findElement(By.css('h1'))
-				).not.toThrow();
+				).not.toThrow()
 			}
 		}
 	}, 60000)
+
+	test('Countries are in alphabetical order', async function() {
+		await driver.get(baseUrl + '/?app=countries&doc=countries')
+
+		let countriesLocator = 'td > a[href *= "edit_country"]:not([title])'
+		const names = await Promise.all(
+			(await driver.findElements(By.css(countriesLocator)))
+				.map((el) => el.getText())
+		)
+
+		expect(names).toEqual(names.slice().sort())
+	})
+
+	test('Zones are in alphabetical order', async function() {
+		driver.get(baseUrl + '/?app=countries&doc=countries')
+
+		const countriesLocator = `//tr[@class='row']/td[6][not(text()=0)]/../td[5]`
+		const withZones = await driver.findElements(By.xpath(countriesLocator))
+		const countries = await Promise.all(withZones.map((el) => el.getText()))
+
+
+		for (countryName of countries) {
+			const country = await driver.findElement(By.xpath(`//a[text() = '${countryName}']`))
+			await country.click();
+
+			const zonesLocator = `//table[@id='table-zones']//tr[3][not(@class) and not(text()='')]`
+			const zones = await Promise.all(
+				(await driver.findElements(By.xpath(zonesLocator)))
+					.map((el) => el.getText())
+			)
+
+			expect(zones).toEqual(zones.slice().sort())
+
+			driver.get(baseUrl + '/?app=countries&doc=countries')
+		}
+	})
 
 	afterEach(() => driver && driver.quit())
 })
