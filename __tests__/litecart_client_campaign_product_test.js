@@ -39,6 +39,17 @@ describe('Litecart Client Campaign Product', function() {
 		product = await driver.findElement(productSelector)
 	})
 
+	test('Only one sticker on product', async function() {
+		const products = await driver.findElements(By.css('.product'));
+		expect(products.length).toBeGreaterThanOrEqual(1);
+
+		const locator = '.sticker';
+		for (const product of products) {
+			const stickers = await product.findElements(By.css(locator));
+			expect(stickers.length).toBe(1);
+		}
+	})
+
 	test('Product name is same in every view', async function() {
 		const productName = await product.findElement(By.css('.name'))
 			.then(name => name.getText())
