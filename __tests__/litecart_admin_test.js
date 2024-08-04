@@ -145,10 +145,11 @@ describe('Litecart Admin', function() {
 		//Fill Prices and save product
 		await driver.findElement(By.xpath(`//a[contains(@href, 'prices')]`)).then(el => el.click());
 		await driver.findElement(By.name('purchase_price')).then(el => el.sendKeys('15' + Key.TAB + Key.ARROW_DOWN + Key.ENTER))
-		await driver.findElement(By.name('prices[USD]')).then(el => el.sendKeys('30' + Key.ENTER)); //By pressing enter here, we are saving product
+		await driver.findElement(By.name('prices[USD]')).then(el => el.sendKeys('30'));
+		//Save product
+		await driver.findElement(By.name('save')).then(el => el.click());
 
 		const product = await driver.findElement(By.xpath(`//a[contains(., \'${productName}\')]`)).then(el => el.getText());
-
 		expect(product).toBe(productName);
 	}, 15000);
 
