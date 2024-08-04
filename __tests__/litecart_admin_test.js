@@ -1,3 +1,5 @@
+const path = require('node:path');
+const { faker } = require('@faker-js/faker')
 const { Builder, Browser, By, Key, until, error } = require('selenium-webdriver')
 /* const { test, beforeEach, afterEach } = require('jest') */
 
@@ -112,5 +114,44 @@ describe('Litecart Admin', function() {
 		}
 	})
 
+	test('Add new product', async function() {
+		const productName = faker.commerce.productName();
+		driver.get(baseUrl + '/?app=catalog&doc=catalog');
+		await driver.findElement(By.css('.button:last-child')).then(el => el.click());
+
+		//Fill General
+		await driver.findElement(By.name('status')).then(el => el.click());
+		await driver.findElement(By.name('name[en]')).then(el => el.sendKeys(productName));
+		await driver.findElement(By.name('code')).then(el => el.sendKeys(faker.helpers.fromRegExp('[a-z]{2}[0-9]{4}')));
+		await driver.findElement(By.name('quantity')).then(async el => {
+			await el.clear();
+			return el.sendKeys(faker.number.int({ min: 1, max: 30 }));
+		});
+		//Load file
+		const imagePath = path.normalize(__dirname + '/../assets/duck.jpg');
+		await driver.findElement(By.name('new_images[]')).then(el => el.sendKeys(imagePath));
+		//Set dates
+		await driver.findElement(By.name('date_valid_from')).then(async el => {
+			await el.click();
+			await el.sendKeys(Key.ARROW_UP + Key.TAB + Key.ARROW_UP + Key.TAB + Key.ARROW_UP);
+		});
+
+		//Fill Information
+		await driver.findElement(By.xpath(`//a[contains(@href, 'information')]`)).then(el => el.click());
+		await driver.findElement(By.name('manufacturer_id')).then(el => el.sendKeys(Key.ARROW_DOWN + Key.ENTER));
+		await driver.findElement(By.name('short_description[en]')).then(el => el.sendKeys(faker.commerce.productMaterial() + ' ' + faker.commerce.productAdjective() + ' ' + faker.commerce.productName()));
+		await driver.findElement(By.className('trumbowyg-editor')).then(el => el.sendKeys(faker.commerce.productDescription()));
+
+		//Fill Prices and save product
+		await driver.findElement(By.xpath(`//a[contains(@href, 'prices')]`)).then(el => el.click());
+		await driver.findElement(By.name('purchase_price')).then(el => el.sendKeys('15' + Key.TAB + Key.ARROW_DOWN + Key.ENTER))
+		await driver.findElement(By.name('prices[USD]')).then(el => el.sendKeys('30' + Key.ENTER)); //By pressing enter here, we are saving product
+
+		const product = await driver.findElement(By.xpath(`//a[contains(., \'${productName}\')]`)).then(el => el.getText());
+
+		expect(product).toBe(productName);
+	}, 15000);
+
 	afterEach(() => driver && driver.quit())
 })
+//await new Promise(r => setTimeout(r, 4000));
