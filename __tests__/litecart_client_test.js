@@ -1,4 +1,4 @@
-const { Builder, Browser, By, until } = require('selenium-webdriver');
+const { Builder, Browser, By, until, Key } = require('selenium-webdriver');
 const { describe, expect, test } = require('@jest/globals');
 const { fakerEN_US: faker } = require('@faker-js/faker');
 
@@ -6,6 +6,7 @@ describe('Litecart Client', function() {
 	let driver;
 	const baseUrl = 'http://localhost:8080/litecart/';
 	const noticeSelector = By.css('.notice.success');
+	const implicitWaitTime = 2000;
 
 	const Person = {
 		fName: faker.person.firstName(),
@@ -20,7 +21,7 @@ describe('Litecart Client', function() {
 
 	beforeEach(async function() {
 		driver = await new Builder().forBrowser(Browser.CHROME).build();
-		await driver.manage().setTimeouts({ implicit: 2000 });
+		await driver.manage().setTimeouts({ implicit: implicitWaitTime });
 	}, 60000);
 
 	test('Sign up new user', async function() {
