@@ -1,7 +1,7 @@
 const path = require('node:path');
 const { faker } = require('@faker-js/faker')
 const { Builder, Browser, By, Key, until, error } = require('selenium-webdriver')
-/* const { test, beforeEach, afterEach } = require('jest') */
+/* const { test, expect, beforeEach, afterEach } = require('jest') */
 
 describe('Litecart Admin', function() {
 	let driver
@@ -151,6 +151,29 @@ describe('Litecart Admin', function() {
 
 		const product = await driver.findElement(By.xpath(`//a[contains(., \'${productName}\')]`)).then(el => el.getText());
 		expect(product).toBe(productName);
+	}, 15000);
+
+	test('Links open in new window', async function() {
+		await driver.get(baseUrl + '/?app=countries&doc=countries');
+		await driver.findElements(By.css('a[href *= "country_code"]')).then(el => el[0].click());
+
+		const originalTab = await driver.getWindowHandle();
+		const originalTabsCount = (await driver.getAllWindowHandles()).length;
+		const links = await driver.findElements(By.className('fa-external-link'));
+
+		for (const link of links) {
+			await link.click();
+			await driver.wait(function(driver) {
+				return driver.getAllWindowHandles().then((handles) => handles.length > originalTabsCount);
+			}, 1000);
+
+			const newTabs = await driver.getAllWindowHandles();
+			expect(newTabs.length).toBeGreaterThan(originalTabsCount);
+			const newTab = newTabs[originalTabsCount];
+			await driver.switchTo().window(newTab);
+			await driver.close();
+			await driver.switchTo().window(originalTab);
+		}
 	}, 15000);
 
 	afterEach(() => driver && driver.quit())
